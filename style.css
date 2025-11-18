@@ -13,6 +13,30 @@ h2 {
   margin: 0;
 }
 
+button.collapse-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 5px 0;
+  padding: 10px;
+  background-color: #a3f0d1;
+  border: 1px solid #7ed9b8;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+}
+
+button.collapse-btn:hover {
+  background-color: #7ed9b8;
+}
+
+div.collapse-content {
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
 .header {
   width: 100%;
   padding: 20px;
@@ -59,10 +83,63 @@ h2 {
 
 .block-3 {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   flex: 1 1 60%;
   background-color: #add8e6;
   overflow: hidden;
+  background: #f9f9fb;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  /* max-width: 500px; */
+  margin: 0 auto;
+  text-align: center;
+}
+
+.block-3 h1 {
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+#object-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  /* max-width: 500px; */
+}
+
+#object-form input[type="text"] {
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+#object-form input[type="text"]:focus {
+  border-color: #7ed9b8;
+  box-shadow: 0 0 5px rgba(126, 217, 184, 0.5);
+  outline: none;
+}
+
+#object-form button {
+  background-color: #7ed9b8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#object-form button:hover {
+  background-color: #66c4a2;
+  transform: scale(1.03);
 }
 
 .photo {

@@ -8,91 +8,49 @@ $db   = "php";
 
 $connection = new mysqli($host, $user, $pass, $db);
 if ($connection->connect_error) {
-    http_response_code(500);
     echo json_encode(['status'=>'error','message'=>'db_connect','error'=>$connection->connect_error]);
     exit;
 }
 $connection->set_charset("utf8mb4");
 
 $method = $_SERVER['REQUEST_METHOD'];
+$page = basename($_REQUEST['page'] ?? basename($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
 
 if ($method === 'POST') {
-    // Намагаємося читати з різних джерел 
-    $page = $_POST['page'] ?? null;
     $index = isset($_POST['index']) ? intval($_POST['index']) : null;
-    $content = $_POST['content'] ?? null;
+    $content = $_POST['content'] ?? '';
 
-    if (empty($_POST)) {
-        $raw = file_get_contents('php://input');
-        $json = json_decode($raw, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $page = $json['page'] ?? $page;
-            $index = isset($json['index']) ? intval($json['index']) : $index;
-            $content = $json['content'] ?? $content;
-        } else {
-            // Якщо raw - form-encoded string
-            parse_str($raw, $parsed);
-            if (!empty($parsed)) {
-                $page = $parsed['page'] ?? $page;
-                $index = isset($parsed['index']) ? intval($parsed['index']) : $index;
-                $content = $parsed['content'] ?? $content;
-            }
-        }
-    }
-
-    // fallback: якщо page пустий 
-    if (!$page) {
-        $page = basename($_SERVER['HTTP_REFERER'] ?? $_SERVER['SCRIPT_NAME'] ?? 'index.php');
-    }
-
-    $page = (string) trim($page);
-    $content = (string) $content;
-    $content = trim($content);
-
-    $errors = [];
-    if ($page === '') $errors[] = 'empty_page';
-    if (!is_int($index) || $index < 0) $errors[] = 'invalid_index';
-    if ($content === '') $errors[] = 'empty_content';
-
-    if (!empty($errors)) {
-        echo json_encode([
-            'status'=>'error',
-            'message'=>'Invalid input',
-            'errors'=>$errors,
-            'received'=>['page'=>$page,'index'=>$index,'content_preview'=>mb_substr($content,0,200)]
-        ]);
+    if ($index === null || $content === '') {
+        echo json_encode(['status'=>'error','message'=>'empty_fields']);
         $connection->close();
         exit;
     }
 
-    $postData = $connection->prepare("INSERT INTO page_content (page, element_index, content) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE content=VALUES(content), last_update=NOW()");
-    $postData->bind_param("sis", $page, $index, $content);
+    $stmt = $connection->prepare("INSERT INTO collapse_objects (page, element_index, content) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE content=VALUES(content), last_update=NOW()");
+    $stmt->bind_param("sis", $page, $index, $content);
+    $stmt->execute();
+    $stmt->close();
 
-    if ($postData->execute()) {
-        echo json_encode(['status'=>'ok']);
-    } else {
-        echo json_encode(['status'=>'error','message'=>'db_error','db_error'=>$postData->error]);
-    }
-    $postData->close();
+    echo json_encode(['status'=>'ok']);
     $connection->close();
     exit;
 }
 
-// Повертаємо JSON зі сторінки
 if ($method === 'GET') {
-    $page = basename($_GET['page'] ?? basename($_SERVER['SCRIPT_NAME'] ?? 'index.php'));
     $dbContent = [];
-    $postData = $connection->prepare("SELECT element_index, content FROM page_content WHERE page=?");
-    $postData->bind_param("s", $page);
-    $postData->execute();
-    $result = $postData->get_result();
+    $stmt = $connection->prepare("SELECT element_index, content FROM collapse_objects WHERE page=?");
+    $stmt->bind_param("s", $page);
+    $stmt->execute();
+    $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $dbContent[$row['element_index']] = $row['content'];
     }
-    $postData->close();
+    $stmt->close();
     $connection->close();
     echo json_encode($dbContent);
     exit;
 }
 
 echo json_encode(['status'=>'error','message'=>'unsupported_method']);
+$connection->close();
+?>
